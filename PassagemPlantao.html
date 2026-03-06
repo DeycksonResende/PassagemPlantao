@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Plantão Digital — Enfermagem</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow-x:hidden}
+body{background:#07111f;color:#dde8f5;font-family:'DM Sans','Segoe UI',sans-serif;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+h1,h2,h3{font-family:'Syne',sans-serif}
+button{cursor:pointer;font-family:'DM Sans',sans-serif}
+input,select,textarea{font-family:'DM Sans',sans-serif}
+select option{background:#0d1f35;color:#dde8f5}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#1e4060;border-radius:2px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.fu{animation:fadeUp .25s ease both}
+.pulse{animation:pulse 1.8s infinite}
+#boot{position:fixed;inset:0;background:#07111f;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:16px}
+#boot .logo{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,#1e6eb5,#0ab8d8);display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 8px 28px rgba(30,144,216,.4)}
+#boot .spin{width:28px;height:28px;border:3px solid rgba(30,144,216,.2);border-top-color:#1e90d8;border-radius:50%;animation:spin .8s linear infinite}
+#boot p{color:#4d7090;font-size:13px}
+#boot .err{color:#ff8a80;font-size:13px;max-width:320px;text-align:center;line-height:1.6;padding:16px;background:rgba(255,82,82,.08);border:1px solid rgba(255,82,82,.2);border-radius:12px}
+#app{min-height:100vh;display:none}
+.header{background:linear-gradient(90deg,#0d1f35,#122840);border-bottom:1px solid rgba(255,255,255,.07);padding:13px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header-logo{display:flex;align-items:center;gap:10px}
+.header-icon{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#1e6eb5,#0ab8d8);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.header-title{font-size:14px;font-weight:700;font-family:'Syne',sans-serif}
+.header-sub{font-size:10px;color:#4d7090;margin-top:1px}
+.badge-red{background:#ff5252;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:800;color:#fff}
+.tabs{display:flex;padding:10px 12px 0;gap:6px}
+.tab{flex:1;padding:10px 0;border-radius:10px;border:none;font-size:13px;font-weight:600;transition:all .2s;background:rgba(255,255,255,.04);color:#4d7090}
+.tab.active{background:linear-gradient(135deg,#1e6eb5,#0ab8d8);color:#fff;box-shadow:0 4px 16px rgba(30,144,216,.35)}
+.tabs3 .tab{font-size:11px;padding:9px 2px}
+.content{padding:12px 12px 40px}
+.card{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px;margin-bottom:10px}
+.label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#4d7090;display:block;margin-bottom:6px}
+.input{width:100%;padding:11px 14px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);color:#dde8f5;font-size:14px;outline:none}
+.input:focus{border-color:rgba(30,144,216,.5)}
+textarea.input{resize:vertical;line-height:1.55}
+.btn{border:none;border-radius:10px;font-weight:600;font-size:14px;padding:11px 18px;transition:opacity .15s,transform .1s;font-family:'DM Sans',sans-serif}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,#1e90d8,#0ab8d8);color:#fff;box-shadow:0 4px 18px rgba(30,144,216,.35)}
+.btn-success{background:linear-gradient(135deg,#00c853,#00e676);color:#fff}
+.btn-danger{background:#ff5252;color:#fff}
+.btn-ghost{background:rgba(255,255,255,.05);color:#4d7090;border:1px solid rgba(255,255,255,.09)}
+.btn-wide{width:100%}
+.btn:disabled{opacity:.5;cursor:default}
+.pri-btns{display:flex;gap:6px}
+.pri-btn{flex:1;padding:8px 0;border-radius:8px;border:2px solid transparent;background:rgba(255,255,255,.04);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
+.pri-btn.sel-alta{border-color:#ff5252;background:rgba(255,82,82,.14);color:#ff5252}
+.pri-btn.sel-media{border-color:#ffab40;background:rgba(255,171,64,.14);color:#ffab40}
+.pri-btn.sel-baixa{border-color:#69f0ae;background:rgba(105,240,174,.14);color:#69f0ae}
+.pri-btn.unsel{color:#4d7090}
+.pend-card{border-radius:12px;margin-bottom:8px;overflow:hidden;border:1px solid rgba(255,255,255,.07)}
+.pend-card.done{background:rgba(105,240,174,.03);border-color:rgba(105,240,174,.14)}
+.pend-card.pend{background:rgba(255,255,255,.033)}
+.pend-row{padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px;-webkit-user-select:none;user-select:none}
+.leito-box{width:48px;height:48px;border-radius:10px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,.055)}
+.leito-box.done{background:rgba(105,240,174,.1)}
+.leito-lbl{font-size:8px;color:#4d7090;font-weight:700;letter-spacing:.05em}
+.leito-num{font-size:12px;font-weight:800;color:#9ecfef}
+.leito-num.done{color:#69f0ae}
+.pend-title{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pend-title.done{color:#4d7090;text-decoration:line-through}
+.pend-meta{display:flex;gap:6px;margin-top:3px;flex-wrap:wrap;align-items:center}
+.meta{font-size:10px;color:#4d7090}
+.chip{font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px}
+.chip-alta{color:#ff5252;background:rgba(255,82,82,.14)}
+.chip-media{color:#ffab40;background:rgba(255,171,64,.14)}
+.chip-baixa{color:#69f0ae;background:rgba(105,240,174,.14)}
+.chip-done{color:#69f0ae;background:rgba(105,240,174,.1)}
+.pend-detail{padding:0 14px 14px;border-top:1px solid rgba(255,255,255,.06)}
+.obs-box{background:rgba(255,255,255,.04);border-radius:8px;padding:10px 12px;margin-top:12px;font-size:13px;color:#7aaabf;line-height:1.6}
+.resolved-box{margin-top:12px;padding:10px 12px;background:rgba(105,240,174,.07);border-radius:8px;font-size:12px;color:#69f0ae;font-weight:600}
+.filter-bar{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px;margin-bottom:10px}
+.filter-tabs{display:flex;gap:4px;margin-top:8px}
+.ftab{flex:1;padding:7px 0;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:#4d7090;border-bottom:2px solid transparent;transition:all .15s}
+.ftab.active{background:rgba(30,144,216,.14);color:#40c4ff;border-bottom-color:#40c4ff}
+.empty{text-align:center;padding:40px 20px;background:rgba(255,255,255,.02);border-radius:12px;border:1px solid rgba(255,255,255,.06)}
+.empty-icon{font-size:36px;margin-bottom:8px}
+.empty-txt{color:#4d7090;font-size:14px;font-weight:600}
+#toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-8px);background:#0d2a44;border:1px solid rgba(30,144,216,.4);border-radius:12px;padding:11px 20px;z-index:9999;font-size:13px;font-weight:600;color:#a8d8f5;box-shadow:0 8px 32px rgba(0,0,0,.55);white-space:nowrap;max-width:92vw;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center;z-index:999;padding:20px}
+#modal-bg.open{display:flex}
+.modal-box{background:#0d1f35;border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:26px;max-width:320px;width:100%;text-align:center}
+.modal-title{font-family:'Syne',sans-serif;font-size:16px;margin-bottom:6px}
+.modal-sub{font-size:12px;color:#4d7090;margin-bottom:20px;line-height:1.5}
+.modal-btns{display:flex;gap:8px}
+#login-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at top,#0d2440 0%,#07111f 70%);padding:24px}
+.login-logo{text-align:center;margin-bottom:32px}
+.login-logo-icon{width:68px;height:68px;border-radius:20px;margin:0 auto 16px;background:linear-gradient(135deg,#1e6eb5,#0ab8d8);display:flex;align-items:center;justify-content:center;font-size:32px;box-shadow:0 8px 28px rgba(30,144,216,.4)}
+.login-title{font-size:24px;font-weight:800;margin-bottom:6px}
+.login-sub{font-size:13px;color:#4d7090}
+.login-card{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:24px;width:100%;max-width:360px}
+.err-msg{font-size:12px;color:#ff8a80;margin-bottom:12px;line-height:1.5}
+.hint{font-size:11px;color:#69f0ae;margin-top:6px}
+.login-hint{text-align:center;font-size:11px;color:#1e3856;margin-top:14px}
+#not-cfg{min-height:100vh;display:none;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at top,#0d2440,#07111f)}
+#not-cfg.show{display:flex}
+.cfg-card{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:28px;max-width:400px;text-align:center}
+.cfg-title{font-family:'Syne',sans-serif;font-size:18px;color:#ff8a80;margin-bottom:10px}
+.cfg-body{font-size:13px;color:#4d7090;line-height:1.7;margin-bottom:18px}
+.cfg-steps{background:rgba(30,144,216,.08);border:1px solid rgba(30,144,216,.2);border-radius:10px;padding:14px;text-align:left}
+.cfg-step{font-size:12px;color:#4d7090;margin-bottom:4px}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 12px 0}
+.stat-card{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:14px 16px}
+.stat-num{font-size:24px;font-weight:800}
+.stat-lbl{font-size:11px;color:#4d7090;margin-top:2px}
+.user-card{background:rgba(255,255,255,.033);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.user-icon{width:42px;height:42px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px}
+.user-icon.admin-i{background:rgba(179,136,255,.18)}
+.user-icon.tech-i{background:rgba(30,144,216,.14)}
+.user-name{font-size:13px;font-weight:700}
+.user-chips{display:flex;gap:5px;margin-top:3px;flex-wrap:wrap;align-items:center}
+.chip-admin{color:#b388ff;background:rgba(179,136,255,.14);font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
+.chip-tech{color:#40c4ff;background:rgba(64,196,255,.14);font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
+.chip-ativo{color:#69f0ae;background:rgba(105,240,174,.1);font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
+.chip-inativo{color:#ff5252;background:rgba(255,82,82,.1);font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
+.user-actions{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.mini-btn{padding:4px 9px;border-radius:6px;font-size:10px;font-weight:700;border:1px solid;background:transparent;cursor:pointer;font-family:'DM Sans',sans-serif}
+.log-card{background:rgba(255,255,255,.033);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:10px 14px;margin-bottom:6px}
+.log-meta{display:flex;justify-content:space-between;align-items:flex-start}
+.log-chips{display:flex;gap:6px;align-items:center;margin-bottom:4px}
+.log-detail{font-size:11px;color:#4d7090;line-height:1.5}
+.log-ts{font-size:10px;color:#1e3856;white-space:nowrap;margin-left:10px;flex-shrink:0}
+.filter-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.audit-count{font-size:11px;color:#4d7090;display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.clear-btn{background:none;border:none;color:#40c4ff;font-size:11px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div id="boot">
+  <div class="logo">🏥</div>
+  <div class="spin"></div>
+  <p>Carregando...</p>
+</div>
+
+<div id="not-cfg">
+  <div class="cfg-card fu">
+    <div style="font-size:40px;margin-bottom:14px">⚙️</div>
+    <div class="cfg-title">Firebase não configurado</div>
+    <p class="cfg-body">Abra o arquivo HTML e substitua os valores em <code style="color:#ffd740;background:rgba(255,215,64,.12);padding:1px 6px;border-radius:4px">FIREBASE_CONFIG</code> com os dados do seu projeto.</p>
+    <div class="cfg-steps">
+      <p style="font-size:11px;color:#40c4ff;font-weight:700;margin-bottom:8px">PASSO A PASSO:</p>
+      <p class="cfg-step">1. Acesse console.firebase.google.com</p>
+      <p class="cfg-step">2. Crie um projeto gratuito</p>
+      <p class="cfg-step">3. Adicione um app Web</p>
+      <p class="cfg-step">4. Copie o firebaseConfig</p>
+      <p class="cfg-step">5. Cole neste arquivo HTML (linha 10)</p>
+      <p class="cfg-step">6. Ative o Firestore Database</p>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<div id="modal-bg">
+  <div class="modal-box fu">
+    <div style="font-size:36px;margin-bottom:12px">🗑️</div>
+    <div class="modal-title" id="modal-title">Remover pendência?</div>
+    <div class="modal-sub" id="modal-sub"></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-danger" style="flex:1" id="modal-confirm">Remover</button>
+    </div>
+  </div>
+</div>
+
+<div id="app"></div>
+
+<!-- ══════════════════════════════════════
+     EDITE AQUI — COLE SEU FIREBASE CONFIG
+     ══════════════════════════════════════ -->
+<script>
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyBreDyMwwwMGfxQzgnRlORMs7T1AUfGVdo",
+  authDomain:        "passagemplantao-33dfd.firebaseapp.com",
+  projectId:         "passagemplantao-33dfd",
+  storageBucket:     "passagemplantao-33dfd.firebasestorage.app",
+  messagingSenderId: "876445177549",
+  appId:             "1:876445177549:web:3b97c7a98775b4e3ad7b84"
+};
+const ADMIN_MASTER_PIN = "0490";
+</script>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+<script>
+const ITENS=["Controle de gotejamento / transfusão de sangue","Watcher — Controle de SSVV","Medicamento correndo / pendente retirar","Mudança de decúbito","Paciente com controle de diurese","Instalar medicamento","Curativo","Glicemia","Reavaliação da dor","Excesso de materiais no Posto","Roupas sujas","Troca de fralda","Lesão por pressão (LPP)","Banho realizado","Algum cuidado especial","Medicamentos próprios","Outros"];
+const LEITOS=["201A","201B","202A","202B","203A","203B","204A","204B","205A","205B","206A","206B","207A","207B","208A","208B","209A","209B","210A","210B","256A","256B","257A","257B","258A","258B","UTI-01","UTI-02","UTI-03","UTI-04","UTI-05","PS-01","PS-02","PS-03"];
+const ACOES={login:{label:"Login",color:"#40c4ff"},cadastro:{label:"Cadastro",color:"#b388ff"},criou_pendencia:{label:"Criou pendência",color:"#ffd740"},resolveu_pendencia:{label:"Resolveu pendência",color:"#69f0ae"},removeu_pendencia:{label:"Removeu pendência",color:"#ff5252"},alterou_usuario:{label:"Alterou usuário",color:"#f48fb1"},alterou_papel:{label:"Alterou papel",color:"#ffcc02"},resetou_pin:{label:"Resetou PIN",color:"#80d8ff"},logout:{label:"Logout",color:"#90a4ae"}};
+
+let db,currentUser=null,pendencias=[],usuarios=[],auditLogs=[],unsubs=[];
+let _curPri="media",_openPends={},_filtL="Todos",_filtS="pendente",_lfU="Todos",_lfA="Todas",_lfD="";
+
+function fmt(ts,s=false){if(!ts)return"—";const d=ts.toDate?ts.toDate():new Date(ts);return s?d.toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):d.toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"});}
+let _tt;function toast(m){const e=document.getElementById("toast");e.textContent=m;e.classList.add("show");clearTimeout(_tt);_tt=setTimeout(()=>e.classList.remove("show"),3200);}
+function closeModal(){document.getElementById("modal-bg").classList.remove("open");}
+function openModal(t,s,fn){document.getElementById("modal-title").textContent=t;document.getElementById("modal-sub").innerHTML=s;document.getElementById("modal-confirm").onclick=fn;document.getElementById("modal-bg").classList.add("open");}
+async function aLog(a,u,d={}){if(!db)return;try{await db.collection("auditLog").add({acao:a,usuario:u,detalhes:d,timestamp:firebase.firestore.FieldValue.serverTimestamp()});}catch(e){console.warn(e);}}
+function h(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
+
+window.addEventListener("load",()=>{
+  const ok=!FIREBASE_CONFIG.apiKey.startsWith("COLE");
+  if(!ok){document.getElementById("boot").style.display="none";document.getElementById("not-cfg").classList.add("show");return;}
+  try{
+    if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
+    db=firebase.firestore();
+    document.getElementById("boot").style.display="none";
+    const s=sessionStorage.getItem("pd_user");
+    if(s){currentUser=JSON.parse(s);startApp();}else renderLogin();
+  }catch(e){document.getElementById("boot").innerHTML=`<div class="err">❌ Erro ao conectar ao Firebase.<br><small style="color:#7a4040;margin-top:8px;display:block">${e.message}</small></div>`;}
+});
+
+/* LOGIN */
+function renderLogin(){
+  document.getElementById("app").style.display="none";
+  let ls=document.getElementById("login-screen");
+  if(ls)ls.remove();
+  const el=document.createElement("div");
+  el.id="login-screen";
+  el.innerHTML=`<div class="login-logo fu"><div class="login-logo-icon">🏥</div><h1 class="login-title">Plantão Digital</h1><p class="login-sub">Passagem de plantão — Enfermagem</p></div><div class="login-card fu"><div style="margin-bottom:14px"><label class="label">DRT (Registro profissional) *</label><input class="input" id="l-drt" type="text" placeholder="Ex: 123456" autocomplete="off"></div><div style="margin-bottom:14px"><label class="label">PIN (4 dígitos) *</label><input class="input" id="l-pin" type="password" maxlength="4" inputmode="numeric" placeholder="••••"></div><div id="l-nomew" style="display:none;margin-bottom:14px"><label class="label">Nome completo *</label><input class="input" id="l-nome" type="text" placeholder="Ex: Wilson Oliveira" autocomplete="off"></div><div id="l-p2w" style="display:none;margin-bottom:14px"><label class="label">Confirmar PIN</label><input class="input" id="l-pin2" type="password" maxlength="4" inputmode="numeric" placeholder="••••"><p class="hint">✨ Primeiro acesso — escolha seu PIN e informe seu nome</p></div><p class="err-msg" id="l-err" style="display:none"></p><button class="btn btn-primary btn-wide" id="l-btn">Entrar</button></div><p class="login-hint">Primeiro acesso? Digite seu DRT e defina um PIN</p>`;
+  document.body.appendChild(el);
+  let isNew=false;
+  const setE=m=>{const e=document.getElementById("l-err");e.textContent=m;e.style.display=m?"block":"none";};
+  document.getElementById("l-drt").addEventListener("input",()=>{isNew=false;document.getElementById("l-p2w").style.display="none";document.getElementById("l-nomew").style.display="none";setE("");document.getElementById("l-btn").textContent="Entrar";});
+  document.getElementById("l-btn").addEventListener("click",async()=>{
+    const drt=document.getElementById("l-drt").value.trim();
+    const pin=document.getElementById("l-pin").value;
+    const pin2=document.getElementById("l-pin2").value;
+    const nome=(document.getElementById("l-nome")?document.getElementById("l-nome").value.trim():"");
+    setE("");
+    if(!drt)return setE("Digite seu DRT.");
+    if(!/^\d{4}$/.test(pin))return setE("O PIN deve ter 4 dígitos numéricos.");
+    if(drt.toUpperCase()==="ADMIN"&&pin===ADMIN_MASTER_PIN){await aLog("login","ADMIN",{master:true});doLogin({nome:"ADMIN",drt:"ADMIN",role:"admin",id:"admin-master"});return;}
+    const btn=document.getElementById("l-btn");btn.disabled=true;btn.textContent="Entrando...";
+    try{
+      const snap=await db.collection("usuarios").where("drt","==",drt).limit(1).get();
+      if(snap.empty){
+        if(!isNew){isNew=true;document.getElementById("l-p2w").style.display="block";document.getElementById("l-nomew").style.display="block";setE("DRT não encontrado — informe seu nome e confirme o PIN para criar sua conta.");btn.textContent="Criar conta e entrar";btn.disabled=false;return;}
+        if(!nome){setE("Digite seu nome completo para o cadastro.");btn.disabled=false;btn.textContent="Criar conta e entrar";return;}
+        if(pin!==pin2){setE("Os PINs não coincidem.");btn.disabled=false;btn.textContent="Criar conta e entrar";return;}
+        const ref=await db.collection("usuarios").add({nome,drt,pin,role:"tecnico",ativo:true,criadoEm:firebase.firestore.FieldValue.serverTimestamp()});
+        await aLog("cadastro",nome,{userId:ref.id,drt});doLogin({nome,drt,role:"tecnico",id:ref.id});
+      }else{
+        const doc=snap.docs[0];const u=doc.data();
+        if(u.ativo===false){setE("Conta desativada. Fale com o administrador.");btn.disabled=false;btn.textContent="Entrar";return;}
+        if(u.pin!==pin){setE("PIN incorreto.");btn.disabled=false;btn.textContent="Entrar";return;}
+        await aLog("login",u.nome,{userId:doc.id});doLogin({nome:u.nome,drt:u.drt||drt,role:u.role||"tecnico",id:doc.id});
+      }
+    }catch(e){console.error(e);setE("Erro de conexão. Verifique sua internet.");btn.disabled=false;btn.textContent=isNew?"Criar conta e entrar":"Entrar";}
+  });
+  ["l-drt","l-pin","l-pin2"].forEach(id=>document.getElementById(id)?.addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("l-btn").click();}));
+  document.getElementById("l-nome")?.addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("l-btn").click();});
+}
+
+function doLogin(u){currentUser=u;sessionStorage.setItem("pd_user",JSON.stringify(u));const ls=document.getElementById("login-screen");if(ls)ls.remove();startApp();}
+async function logout(){await aLog("logout",currentUser.nome);sessionStorage.removeItem("pd_user");currentUser=null;unsubs.forEach(f=>f());unsubs=[];const a=document.getElementById("app");a.style.display="none";a.innerHTML="";renderLogin();}
+function startApp(){const a=document.getElementById("app");a.style.display="block";if(currentUser.role==="admin")renderAdmin();else renderTech();}
+
+/* TECH */
+function renderTech(){
+  const a=document.getElementById("app");
+  a.innerHTML=`<div class="header"><div class="header-logo"><div class="header-icon">🏥</div><div><div class="header-title">Plantão Digital</div><div class="header-sub">Olá, ${h(currentUser.nome)}${currentUser.drt?" — DRT: "+h(currentUser.drt):""}</div></div></div><div style="display:flex;gap:8px;align-items:center"><span id="t-badge" style="display:none" class="badge-red">0</span><button class="btn btn-ghost" style="padding:6px 12px;font-size:12px" onclick="logout()">Sair</button></div></div><div class="tabs"><button class="tab active" id="tab-ver" onclick="techTab('ver')">📋 Pendências</button><button class="tab" id="tab-add" onclick="techTab('add')">➕ Registrar</button></div><div class="content"><div id="tech-ver"></div><div id="tech-add" style="display:none"></div></div>`;
+  renderAddForm("tech-add",()=>{toast("✅ Pendência registrada!");techTab("ver");});
+  const unsub=db.collection("pendencias").orderBy("criadoEm","desc").onSnapshot(s=>{
+    pendencias=s.docs.map(d=>({id:d.id,...d.data()}));
+    const n=pendencias.filter(p=>p.status==="pendente").length;
+    const b=document.getElementById("t-badge");if(b){b.textContent=n;b.style.display=n>0?"block":"none";}
+    if(document.getElementById("tech-ver")&&document.getElementById("tech-ver").style.display!=="none")renderList("tech-ver",false);
+  },e=>console.error(e));
+  unsubs.push(unsub);
+  renderList("tech-ver",false);
+}
+
+function techTab(t){
+  document.getElementById("tech-ver").style.display=t==="ver"?"block":"none";
+  document.getElementById("tech-add").style.display=t==="add"?"block":"none";
+  document.getElementById("tab-ver").classList.toggle("active",t==="ver");
+  document.getElementById("tab-add").classList.toggle("active",t==="add");
+}
+
+/* ADD FORM */
+function renderAddForm(cid,cb){
+  const c=document.getElementById(cid);if(!c)return;
+  c._cb=cb;
+  c.innerHTML=`<div class="card"><h3 style="font-size:14px;font-weight:700;color:#9ecfef;margin-bottom:16px">Nova Pendência</h3><div style="margin-bottom:12px"><label class="label">Leito *</label><select class="input" id="f-leito"><option value="">Selecione o leito</option>${LEITOS.map(l=>`<option>${h(l)}</option>`).join("")}</select></div><div style="margin-bottom:12px"><label class="label">Pendência *</label><select class="input" id="f-item"><option value="">Selecione o item</option>${ITENS.map(i=>`<option>${h(i)}</option>`).join("")}</select></div><div style="margin-bottom:12px"><label class="label">Prioridade</label><div class="pri-btns"><button class="pri-btn unsel" id="pri-alta" onclick="selPri('alta')">🔴 Alta</button><button class="pri-btn sel-media" id="pri-media" onclick="selPri('media')">🟡 Média</button><button class="pri-btn unsel" id="pri-baixa" onclick="selPri('baixa')">🟢 Baixa</button></div></div><div style="margin-bottom:16px"><label class="label">Observação (opcional)</label><textarea class="input" id="f-obs" rows="3" placeholder="Detalhes importantes, próximo horário, etc."></textarea></div><p class="err-msg" id="f-err" style="display:none"></p><button class="btn btn-primary btn-wide" id="f-btn" onclick="submitForm('${cid}')">Registrar Pendência</button></div>`;
+  _curPri="media";
+}
+
+function selPri(v){_curPri=v;["alta","media","baixa"].forEach(p=>{const b=document.getElementById("pri-"+p);if(b)b.className="pri-btn "+(p===v?"sel-"+p:"unsel");});}
+
+async function submitForm(cid){
+  const leito=document.getElementById("f-leito")?.value;
+  const item=document.getElementById("f-item")?.value;
+  const obs=document.getElementById("f-obs")?.value||"";
+  const errEl=document.getElementById("f-err");
+  const setE=m=>{errEl.textContent=m;errEl.style.display=m?"block":"none";};
+  if(!leito)return setE("Selecione o leito.");
+  if(!item)return setE("Selecione a pendência.");
+  setE("");const btn=document.getElementById("f-btn");btn.disabled=true;btn.textContent="Registrando...";
+  try{
+    const ref=await db.collection("pendencias").add({leito,item,obs,prioridade:_curPri,status:"pendente",criadoPor:currentUser.nome,criadoEm:firebase.firestore.FieldValue.serverTimestamp(),resolvidoPor:null,resolvidoEm:null});
+    await aLog("criou_pendencia",currentUser.nome,{pendenciaId:ref.id,leito,item,prioridade:_curPri});
+    const c=document.getElementById(cid);const cb=c?c._cb:null;
+    renderAddForm(cid,cb);if(cb)cb();
+  }catch(e){console.error(e);setE("Erro ao salvar.");btn.disabled=false;btn.textContent="Registrar Pendência";}
+}
+
+/* LIST */
+function renderList(cid,isAdmin){
+  const c=document.getElementById(cid);if(!c)return;
+  const lset=new Set(pendencias.map(p=>p.leito));
+  const lOpts=["Todos",...Array.from(lset).sort()].map(l=>`<option value="${h(l)}" ${_filtL===l?"selected":""}>${h(l)}</option>`).join("");
+  const shown=pendencias.filter(p=>(_filtL==="Todos"||p.leito===_filtL)&&(_filtS==="todos"||p.status===_filtS)).sort((a,b)=>{if(a.status!==b.status)return a.status==="pendente"?-1:1;const o={alta:0,media:1,baixa:2};return(o[a.prioridade]||1)-(o[b.prioridade]||1);});
+  c.innerHTML=`<div class="filter-bar"><label class="label">Filtrar por leito</label><select class="input" style="padding:8px 10px;font-size:12px" onchange="setFL(this.value)">${lOpts}</select><div class="filter-tabs"><button class="ftab ${_filtS==="pendente"?"active":""}" onclick="setFS('pendente')">⏳ Pendentes</button><button class="ftab ${_filtS==="resolvido"?"active":""}" onclick="setFS('resolvido')">✅ Resolvidas</button><button class="ftab ${_filtS==="todos"?"active":""}" onclick="setFS('todos')">Todas</button></div></div>${shown.length===0?`<div class="empty"><div class="empty-icon">🎉</div><div class="empty-txt">Sem pendências aqui!</div></div>`:shown.map(p=>mkCard(p,isAdmin)).join("")}`;
+}
+
+function setFL(v){_filtL=v;renderList("tech-ver",false);renderList("admin-list",true);}
+function setFS(v){_filtS=v;renderList("tech-ver",false);renderList("admin-list",true);}
+
+/* CARD */
+function mkCard(p,isAdmin){
+  const done=p.status==="resolvido";
+  const pm={alta:"chip-alta",media:"chip-media",baixa:"chip-baixa"};
+  const pd={alta:"🔴",media:"🟡",baixa:"🟢"};const pl={alta:"Alta",media:"Média",baixa:"Baixa"};
+  const bc=done?"#69f0ae":p.prioridade==="alta"?"#ff5252":p.prioridade==="baixa"?"#69f0ae":"#ffab40";
+  const canDel=isAdmin||(currentUser&&p.criadoPor===currentUser.nome);
+  const esc=s=>s.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+  return `<div class="pend-card ${done?"done":"pend"}" style="border-left:3px solid ${bc}"><div class="pend-row" onclick="toggleCard('${p.id}')"><div class="leito-box ${done?"done":""}"><span class="leito-lbl">LEITO</span><span class="leito-num ${done?"done":""}">${h(p.leito)}</span></div><div style="flex:1;min-width:0"><div class="pend-title ${done?"done":""}">${h(p.item)}</div><div class="pend-meta"><span class="meta">👤 ${h(p.criadoPor||"—")}</span><span class="meta">·</span><span class="meta">${fmt(p.criadoEm,true)}</span>${!done?`<span class="chip ${pm[p.prioridade]||"chip-media"}">${pd[p.prioridade]||"🟡"} ${pl[p.prioridade]||"Média"}</span>`:`<span class="chip chip-done">✓ Resolvido</span>`}</div></div><span style="color:#1e3856;font-size:11px;flex-shrink:0" id="arr-${p.id}">▼</span></div><div class="pend-detail" id="det-${p.id}" style="display:none">${p.obs?`<div class="obs-box">📝 ${h(p.obs)}</div>`:""} ${done?`<div class="resolved-box">✅ Resolvido por <strong>${h(p.resolvidoPor||"")}</strong> às ${fmt(p.resolvidoEm,true)}</div>`:`<button class="btn btn-success btn-wide" style="margin-top:12px" onclick="resolvePend('${p.id}','${esc(p.leito)}','${esc(p.item)}',this)">✓ Marcar como concluído</button>`}${canDel?`<button class="btn btn-wide" style="margin-top:8px;font-size:12px;background:rgba(255,82,82,.06);color:#ff8a80;border:1px solid rgba(255,82,82,.2);border-radius:10px;padding:9px" onclick="confirmDel('${p.id}','${esc(p.leito)}','${esc(p.item)}')">🗑️ Remover registro</button>`:""}</div></div>`;
+}
+
+function toggleCard(id){const d=document.getElementById("det-"+id);const a=document.getElementById("arr-"+id);if(!d)return;_openPends[id]=!_openPends[id];d.style.display=_openPends[id]?"block":"none";if(a)a.textContent=_openPends[id]?"▲":"▼";}
+
+async function resolvePend(id,leito,item,btn){
+  btn.disabled=true;btn.textContent="Salvando...";
+  try{await db.collection("pendencias").doc(id).update({status:"resolvido",resolvidoPor:currentUser.nome,resolvidoEm:firebase.firestore.FieldValue.serverTimestamp()});await aLog("resolveu_pendencia",currentUser.nome,{pendenciaId:id,leito,item});toast("✅ Pendência concluída!");}
+  catch(e){console.error(e);btn.disabled=false;btn.textContent="✓ Marcar como concluído";}
+}
+
+function confirmDel(id,leito,item){openModal("Remover pendência?",`<strong style="color:#9ecfef">Leito ${h(leito)}</strong><br>${h(item)}`,async()=>{await db.collection("pendencias").doc(id).delete();await aLog("removeu_pendencia",currentUser.nome,{pendenciaId:id,leito,item});closeModal();toast("🗑️ Removida.");});}
+
+/* ADMIN */
+function renderAdmin(){
+  const a=document.getElementById("app");
+  a.innerHTML=`<div class="header" style="background:linear-gradient(90deg,#0a1e38,#1a0a2e)"><div class="header-logo"><div class="header-icon" style="background:linear-gradient(135deg,#4a0e8f,#7c3aed)">⚙️</div><div><div class="header-title">Painel Admin</div><div class="header-sub" style="color:#7a6a90">${h(currentUser.nome)}</div></div></div><button class="btn btn-ghost" style="padding:6px 12px;font-size:12px" onclick="logout()">Sair</button></div><div class="stats-grid" id="admin-stats"></div><div class="tabs tabs3" style="padding:10px 12px 0"><button class="tab active" id="atab-pend" onclick="adminTab('pend')">📋 Pendências</button><button class="tab" id="atab-team" onclick="adminTab('team')">👥 Equipe</button><button class="tab" id="atab-logs" onclick="adminTab('logs')">📊 Auditoria</button></div><div class="content"><div id="admin-pend"><div id="admin-form"></div><div id="admin-list"></div></div><div id="admin-team" style="display:none"></div><div id="admin-logs" style="display:none"></div></div>`;
+  renderAddForm("admin-form",()=>toast("✅ Pendência registrada!"));
+  const u1=db.collection("pendencias").orderBy("criadoEm","desc").onSnapshot(s=>{pendencias=s.docs.map(d=>({id:d.id,...d.data()}));updateStats();if(document.getElementById("admin-list"))renderList("admin-list",true);},e=>console.error(e));
+  const u2=db.collection("usuarios").orderBy("criadoEm","desc").onSnapshot(s=>{usuarios=s.docs.map(d=>({id:d.id,...d.data()}));updateStats();if(document.getElementById("admin-team")&&document.getElementById("admin-team").style.display!=="none")renderTeam();},e=>console.error(e));
+  const u3=db.collection("auditLog").orderBy("timestamp","desc").limit(300).onSnapshot(s=>{auditLogs=s.docs.map(d=>({id:d.id,...d.data()}));if(document.getElementById("admin-logs")&&document.getElementById("admin-logs").style.display!=="none")renderLogs();},e=>console.error(e));
+  unsubs.push(u1,u2,u3);
+  renderList("admin-list",true);
+}
+
+function adminTab(t){["pend","team","logs"].forEach(x=>{document.getElementById("admin-"+x).style.display=x===t?"block":"none";document.getElementById("atab-"+x).classList.toggle("active",x===t);});if(t==="team")renderTeam();if(t==="logs")renderLogs();if(t==="pend")renderList("admin-list",true);}
+
+function updateStats(){const s=document.getElementById("admin-stats");if(!s)return;const np=pendencias.filter(p=>p.status==="pendente").length,na=pendencias.filter(p=>p.status==="pendente"&&p.prioridade==="alta").length,nr=pendencias.filter(p=>p.status==="resolvido").length,nu=usuarios.length;s.innerHTML=[{n:np,l:"Pendentes",c:"#ffab40",i:"⏳"},{n:na,l:"Alta prior.",c:"#ff5252",i:"🔴"},{n:nr,l:"Resolvidas",c:"#69f0ae",i:"✅"},{n:nu,l:"Técnicos",c:"#40c4ff",i:"👥"}].map(({n,l,c,i})=>`<div class="stat-card"><div class="stat-num" style="color:${c}">${n}</div><div class="stat-lbl">${i} ${l}</div></div>`).join("");}
+
+function renderTeam(){const c=document.getElementById("admin-team");if(!c)return;c.innerHTML=`<p style="font-size:11px;color:#4d7090;margin-bottom:12px">${usuarios.length} usuário(s) cadastrado(s)</p>`+usuarios.map(u=>`<div class="user-card" style="opacity:${u.ativo===false?0.5:1}"><div class="user-icon ${u.role==="admin"?"admin-i":"tech-i"}">${u.role==="admin"?"⚙️":"👤"}</div><div style="flex:1"><div class="user-name">${h(u.nome)}${u.drt?` <span style="font-size:11px;color:#4d7090;font-weight:400">DRT: ${h(u.drt)}</span>`:""}</div><div class="user-chips"><span class="${u.role==="admin"?"chip-admin":"chip-tech"}">${u.role||"tecnico"}</span><span class="${u.ativo!==false?"chip-ativo":"chip-inativo"}">${u.ativo!==false?"Ativo":"Inativo"}</span>${u.criadoEm?`<span style="font-size:10px;color:#4d7090">desde ${fmt(u.criadoEm,true)}</span>`:""}</div></div><div class="user-actions"><button class="mini-btn" style="color:${u.ativo!==false?"#ff8a80":"#69f0ae"};border-color:${u.ativo!==false?"rgba(255,82,82,.3)":"rgba(105,240,174,.3)"}" onclick="toggleAtivo('${u.id}',${u.ativo!==false})">${u.ativo!==false?"Desativar":"Ativar"}</button><button class="mini-btn" style="color:#b388ff;border-color:rgba(179,136,255,.3)" onclick="altPapel('${u.id}','${u.role||"tecnico"}')">${(u.role||"tecnico")==="admin"?"→ Técnico":"→ Admin"}</button><button class="mini-btn" style="color:#ffd740;border-color:rgba(255,215,64,.3)" onclick="resetPin('${u.id}','${h(u.nome)}')">Reset PIN</button></div></div>`).join("");}
+
+async function toggleAtivo(uid,cur){await db.collection("usuarios").doc(uid).update({ativo:!cur});await aLog("alterou_usuario",currentUser.nome,{userId:uid,ativo:!cur});toast(!cur?"✅ Usuário ativado":"⛔ Usuário desativado");}
+async function altPapel(uid,cur){const r=cur==="admin"?"tecnico":"admin";await db.collection("usuarios").doc(uid).update({role:r});await aLog("alterou_papel",currentUser.nome,{userId:uid,role:r});toast("✅ Papel → "+r);}
+async function resetPin(uid,nome){await db.collection("usuarios").doc(uid).update({pin:"1234"});await aLog("resetou_pin",currentUser.nome,{userId:uid,nome});toast("🔑 PIN de "+nome+" → 1234");}
+
+function renderLogs(){
+  const c=document.getElementById("admin-logs");if(!c)return;
+  const usrs=["Todos",...Array.from(new Set(auditLogs.map(l=>l.usuario))).sort()];
+  const acs=["Todas",...Array.from(new Set(auditLogs.map(l=>l.acao))).sort()];
+  const fl=auditLogs.filter(l=>{const mu=_lfU==="Todos"||l.usuario===_lfU;const ma=_lfA==="Todas"||l.acao===_lfA;let md=true;if(_lfD&&l.timestamp){const d=l.timestamp.toDate?l.timestamp.toDate():new Date(l.timestamp);md=d.toISOString().slice(0,10)===_lfD;}return mu&&ma&&md;});
+  c.innerHTML=`<div class="filter-bar"><div class="filter-row"><div><label class="label">Técnico</label><select class="input" style="padding:7px 10px;font-size:12px" onchange="_lfU=this.value;renderLogs()">${usrs.map(u=>`<option value="${h(u)}" ${_lfU===u?"selected":""}>${h(u)}</option>`).join("")}</select></div><div><label class="label">Ação</label><select class="input" style="padding:7px 10px;font-size:12px" onchange="_lfA=this.value;renderLogs()">${acs.map(a=>`<option value="${h(a)}" ${_lfA===a?"selected":""}>${ACOES[a]?ACOES[a].label:h(a)}</option>`).join("")}</select></div></div><label class="label">Data</label><input type="date" class="input" style="padding:7px 10px;font-size:12px;color-scheme:dark" value="${_lfD}" onchange="_lfD=this.value;renderLogs()"><div class="audit-count"><span>${fl.length} registro(s)</span>${_lfD?`<button class="clear-btn" onclick="_lfD='';renderLogs()">Limpar data ×</button>`:""}</div></div>${fl.length===0?`<div class="empty"><div class="empty-icon">📋</div><div class="empty-txt">Nenhum registro encontrado.</div></div>`:""}${fl.map(l=>{const a=ACOES[l.acao]||{label:l.acao,color:"#7aaabf"};const d=l.detalhes||{};const det=[d.leito?`🛏 Leito ${h(d.leito)}`:"",d.item?`· ${h(d.item.slice(0,45))}${d.item.length>45?"...":""}`:"",(d.prioridade?`· Prior: ${d.prioridade}`:""),d.role?`· Papel: ${d.role}`:"",d.ativo!==undefined?`· Ativo: ${d.ativo}`:"",d.nome?`· ${h(d.nome)}`:"",d.master?"· (Master)":""].filter(Boolean).join(" ");return `<div class="log-card" style="border-left:3px solid ${a.color}"><div class="log-meta"><div><div class="log-chips"><span class="chip" style="color:${a.color};background:${a.color}22">${a.label}</span><span style="font-size:12px;font-weight:600;color:#9ecfef">${h(l.usuario)}</span></div>${det?`<div class="log-detail">${det}</div>`:""}</div><span class="log-ts">${fmt(l.timestamp)}</span></div></div>`;}).join("")}`;
+}
+
+document.getElementById("modal-bg").addEventListener("click",e=>{if(e.target.id==="modal-bg")closeModal();});
+</script>
+</body>
+</html>

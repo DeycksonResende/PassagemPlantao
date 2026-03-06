@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Plantão Digital — Einstein Hospital Israelita</title>
+<title>Passagem entre técnicos — Einstein Hospital Israelita</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ── EINSTEIN BRAND COLORS ─────────────────────
@@ -232,7 +232,7 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
     </svg>
   </div>
   <div class="boot-name">EINSTEIN<br><span style="font-size:13px;font-weight:600;letter-spacing:.04em">Hospital Israelita</span></div>
-  <div class="boot-sub">Plantão Digital — Enfermagem</div>
+  <div class="boot-sub">Passagem entre técnicos de Enfermagem</div>
   <div class="spin"></div>
 </div>
 
@@ -286,7 +286,22 @@ const ADMIN_MASTER_PIN = "0490";
 
 <script>
 const ITENS=["Controle de gotejamento / transfusão de sangue","Watcher — Controle de SSVV","Medicamento correndo / pendente retirar","Mudança de decúbito","Paciente com controle de diurese","Instalar medicamento","Curativo","Glicemia","Reavaliação da dor","Excesso de materiais no Posto","Roupas sujas","Troca de fralda","Lesão por pressão (LPP)","Banho realizado","Algum cuidado especial","Medicamentos próprios","Outros"];
-const LEITOS=["201A","201B","202A","202B","203A","203B","204A","204B","205A","205B","206A","206B","207A","207B","208A","208B","209A","209B","210A","210B","256A","256B","257A","257B","258A","258B","UTI-01","UTI-02","UTI-03","UTI-04","UTI-05","PS-01","PS-02","PS-03"];
+const BLOCOS={
+  "Bloco B — 2º Andar":[
+    "201A","201B","202A","202B","203A","203B",
+    "204A","204B","205A","205B","206A","206B",
+    "207A","207B","208A","208B","209A","209B",
+    "210A","210B","211A","211B","212A","212B"
+  ],
+  "Bloco A — 2º Andar":[
+    "245A","245B","246A","246B","247A","247B",
+    "248A","248B","249A","249B","250A","250B",
+    "251A","251B","252A","252B","253A","253B",
+    "254A","254B","255A","255B","256A","256B",
+    "257A","257B","258A","258B","259A","259B"
+  ]
+};
+const LEITOS=Object.values(BLOCOS).flat();
 const ACOES={login:{label:"Login",color:"#0066B3"},cadastro:{label:"Cadastro",color:"#6C3483"},criou_pendencia:{label:"Criou pendência",color:"#F57C00"},resolveu_pendencia:{label:"Resolveu pendência",color:"#2E7D32"},removeu_pendencia:{label:"Removeu pendência",color:"#E53935"},alterou_usuario:{label:"Alterou usuário",color:"#AD1457"},alterou_papel:{label:"Alterou papel",color:"#F9A825"},resetou_pin:{label:"Resetou PIN",color:"#00838F"},logout:{label:"Logout",color:"#546E7A"}};
 
 // Star icon HTML
@@ -325,11 +340,11 @@ function renderLogin(){
       <div class="login-brand">EINSTEIN</div>
       <div class="login-brand-sub">HOSPITAL ISRAELITA</div>
       <div class="login-divider"></div>
-      <div class="login-system">Plantão Digital — Enfermagem</div>
+      <div class="login-system">Passagem entre técnicos de Enfermagem</div>
     </div>
     <div class="login-card fu">
       <div style="margin-bottom:14px">
-        <label class="label">DRT (Registro Profissional) *</label>
+        <label class="label">DRT (uSAR APENAS NUMEROS) *</label>
         <input class="input" id="l-drt" type="text" placeholder="Ex: 123456" autocomplete="off">
       </div>
       <div style="margin-bottom:14px">
@@ -419,7 +434,7 @@ function techTab(t){
 function renderAddForm(cid,cb){
   const c=document.getElementById(cid);if(!c)return;c._cb=cb;
   c.innerHTML=`<div class="card"><h3 style="font-size:14px;font-weight:800;color:var(--e-dark);margin-bottom:16px;font-family:'Montserrat',sans-serif;letter-spacing:.02em">Nova Pendência</h3>
-    <div style="margin-bottom:12px"><label class="label">Leito *</label><select class="input" id="f-leito"><option value="">Selecione o leito</option>${LEITOS.map(l=>`<option>${h(l)}</option>`).join("")}</select></div>
+    <div style="margin-bottom:12px"><label class="label">Bloco *</label><select class="input" id="f-bloco" onchange="atualizarLeitos()"><option value="">Selecione o bloco</option>${Object.keys(BLOCOS).map(b=>`<option value="${h(b)}">${h(b)}</option>`).join("")}</select></div><div style="margin-bottom:12px"><label class="label">Leito *</label><select class="input" id="f-leito" disabled style="opacity:.5"><option value="">Selecione o bloco primeiro</option></select></div>
     <div style="margin-bottom:12px"><label class="label">Pendência *</label><select class="input" id="f-item"><option value="">Selecione o item</option>${ITENS.map(i=>`<option>${h(i)}</option>`).join("")}</select></div>
     <div style="margin-bottom:12px"><label class="label">Prioridade</label><div class="pri-btns"><button class="pri-btn" id="pri-alta" onclick="selPri('alta')">🔴 Alta</button><button class="pri-btn sel-media" id="pri-media" onclick="selPri('media')">🟡 Média</button><button class="pri-btn" id="pri-baixa" onclick="selPri('baixa')">🟢 Baixa</button></div></div>
     <div style="margin-bottom:16px"><label class="label">Observação (opcional)</label><textarea class="input" id="f-obs" rows="3" placeholder="Detalhes importantes, próximo horário, etc."></textarea></div>
@@ -429,6 +444,15 @@ function renderAddForm(cid,cb){
 }
 
 function selPri(v){_curPri=v;["alta","media","baixa"].forEach(p=>{const b=document.getElementById("pri-"+p);if(b)b.className="pri-btn"+(p===v?" sel-"+p:"");});}
+function atualizarLeitos(){
+  const bloco=document.getElementById("f-bloco")?.value;
+  const sel=document.getElementById("f-leito");
+  if(!sel)return;
+  if(!bloco){sel.innerHTML='<option value="">Selecione o bloco primeiro</option>';sel.disabled=true;sel.style.opacity=".5";return;}
+  const leitos=BLOCOS[bloco]||[];
+  sel.innerHTML='<option value="">Selecione o leito</option>'+leitos.map(l=>'<option>'+h(l)+'</option>').join('');
+  sel.disabled=false;sel.style.opacity="1";
+}
 
 async function submitForm(cid){
   const leito=document.getElementById("f-leito")?.value;

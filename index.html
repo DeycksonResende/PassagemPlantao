@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Plantão Digital — Einstein Hospital Israelita</title>
+<title>Passagem de Plantao entre técnicos — Einstein Hospital Israelita</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ── EINSTEIN BRAND COLORS ─────────────────────
@@ -232,7 +232,7 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
     </svg>
   </div>
   <div class="boot-name">EINSTEIN<br><span style="font-size:13px;font-weight:600;letter-spacing:.04em">Hospital Israelita</span></div>
-  <div class="boot-sub">Plantão Digital — Enfermagem</div>
+  <div class="boot-sub">Passagem de Plantao entre técnicos/div>
   <div class="spin"></div>
 </div>
 
@@ -290,7 +290,7 @@ const LEITOS=["201A","201B","202A","202B","203A","203B","204A","204B","205A","20
 const ACOES={login:{label:"Login",color:"#0066B3"},cadastro:{label:"Cadastro",color:"#6C3483"},criou_pendencia:{label:"Criou pendência",color:"#F57C00"},resolveu_pendencia:{label:"Resolveu pendência",color:"#2E7D32"},removeu_pendencia:{label:"Removeu pendência",color:"#E53935"},alterou_usuario:{label:"Alterou usuário",color:"#AD1457"},alterou_papel:{label:"Alterou papel",color:"#F9A825"},resetou_pin:{label:"Resetou PIN",color:"#00838F"},logout:{label:"Logout",color:"#546E7A"}};
 
 // Star icon HTML
-const STAR_ICON=`<svg viewBox="0 0 100 100" fill="none" width="100%" height="100%"><polygon points="50,10 63,37 92,37 70,56 78,83 50,66 22,83 30,56 8,37 37,37" fill="none" stroke="white" stroke-width="6" stroke-linejoin="round"/></svg>`;
+const STAR_ICON=`<img src="logo.png" style="width:100%;height:100%;object-fit:contain;padding:8px;background:white;border-radius:50%" alt="Einstein">`;
 
 let db,currentUser=null,pendencias=[],usuarios=[],auditLogs=[],unsubs=[];
 let _curPri="media",_openPends={},_filtL="Todos",_filtS="pendente",_lfU="Todos",_lfA="Todas",_lfD="";
@@ -325,7 +325,7 @@ function renderLogin(){
       <div class="login-brand">EINSTEIN</div>
       <div class="login-brand-sub">HOSPITAL ISRAELITA</div>
       <div class="login-divider"></div>
-      <div class="login-system">Plantão Digital — Enfermagem</div>
+      <div class="login-system">Passagem de Plantao entre técnicos</div>
     </div>
     <div class="login-card fu">
       <div style="margin-bottom:14px">

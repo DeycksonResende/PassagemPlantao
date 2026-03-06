@@ -208,6 +208,30 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
 .audit-count{font-size:11px;color:var(--text2);display:flex;justify-content:space-between;align-items:center;margin-top:6px}
 .clear-btn{background:none;border:none;color:var(--e-mid);font-size:11px;cursor:pointer;font-weight:600}
 
+/* ── RANKING ─────────────────────── */
+.rank-card{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 4px rgba(0,63,127,.05);transition:all .2s}
+.rank-pos{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0;font-family:'Montserrat',sans-serif}
+.rank-1{background:linear-gradient(135deg,#FFD700,#FFA000);color:#fff;box-shadow:0 3px 10px rgba(255,160,0,.4)}
+.rank-2{background:linear-gradient(135deg,#C0C0C0,#9E9E9E);color:#fff;box-shadow:0 3px 8px rgba(158,158,158,.4)}
+.rank-3{background:linear-gradient(135deg,#CD7F32,#8D6E63);color:#fff;box-shadow:0 3px 8px rgba(141,110,99,.4)}
+.rank-n{background:var(--surface2);color:var(--text2);border:1.5px solid var(--border)}
+.rank-info{flex:1}
+.rank-name{font-size:13px;font-weight:700;color:var(--text);font-family:'Montserrat',sans-serif}
+.rank-sub{font-size:10px;color:var(--text2);margin-top:2px}
+.rank-pts{text-align:right;flex-shrink:0}
+.rank-pts-num{font-size:22px;font-weight:800;color:var(--e-dark);font-family:'Montserrat',sans-serif;line-height:1}
+.rank-pts-lbl{font-size:9px;color:var(--text3);font-weight:700;letter-spacing:.06em;font-family:'Montserrat',sans-serif}
+.rank-medal{font-size:18px;flex-shrink:0}
+.rank-filter{background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px}
+.rank-mes-btn{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:transparent;font-size:11px;font-weight:700;cursor:pointer;color:var(--text2);font-family:'Montserrat',sans-serif;transition:all .15s;margin:3px}
+.rank-mes-btn.active{background:var(--e-dark);color:#fff;border-color:var(--e-dark)}
+.rank-trophy{text-align:center;padding:20px 0 10px}
+.rank-trophy-icon{font-size:48px;margin-bottom:8px}
+.rank-trophy-title{font-family:'Montserrat',sans-serif;font-size:16px;font-weight:800;color:var(--e-dark)}
+.rank-trophy-sub{font-size:12px;color:var(--text2);margin-top:4px}
+.rank-empty{text-align:center;padding:32px 20px;color:var(--text2);font-size:13px;font-weight:600}
+
+
 /* ── ADMIN HEADER ────────────────── */
 .admin-header-bar{background:linear-gradient(135deg,#002D5C,#003F7F);border-bottom:none;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 3px 14px rgba(0,45,92,.4)}
 </style>
@@ -302,13 +326,14 @@ const BLOCOS={
   ]
 };
 const LEITOS=Object.values(BLOCOS).flat();
-const ACOES={login:{label:"Login",color:"#0066B3"},cadastro:{label:"Cadastro",color:"#6C3483"},criou_pendencia:{label:"Criou pendência",color:"#F57C00"},resolveu_pendencia:{label:"Resolveu pendência",color:"#2E7D32"},removeu_pendencia:{label:"Removeu pendência",color:"#E53935"},alterou_usuario:{label:"Alterou usuário",color:"#AD1457"},alterou_papel:{label:"Alterou papel",color:"#F9A825"},resetou_pin:{label:"Resetou PIN",color:"#00838F"},logout:{label:"Logout",color:"#546E7A"}};
+const ACOES={login:{label:"Login",color:"#0066B3"},cadastro:{label:"Cadastro",color:"#6C3483"},criou_pendencia:{label:"Criou pendência",color:"#F57C00"},resolveu_pendencia:{label:"Resolveu pendência",color:"#2E7D32"},removeu_pendencia:{label:"Removeu pendência",color:"#E53935"},alterou_usuario:{label:"Alterou usuário",color:"#AD1457"},alterou_papel:{label:"Alterou papel",color:"#F9A825"},resetou_pin:{label:"Resetou PIN",color:"#00838F"},logout:{label:"Logout",color:"#546E7A"},ganhou_ponto:{label:"Ganhou ponto",color:"#FFD700"}};
 
 // Star icon HTML
 const STAR_ICON=`<img src="logo.png" style="width:100%;height:100%;object-fit:contain;padding:8px;background:white;border-radius:50%" alt="Einstein">`;
 
 let db,currentUser=null,pendencias=[],usuarios=[],auditLogs=[],unsubs=[];
 let _curPri="media",_openPends={},_filtL="Todos",_filtS="pendente",_lfU="Todos",_lfA="Todas",_lfD="";
+let _rankMes="",_rankDados=[];
 
 function fmt(ts,s=false){if(!ts)return"—";const d=ts.toDate?ts.toDate():new Date(ts);return s?d.toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):d.toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"});}
 let _tt;function toast(m){const e=document.getElementById("toast");e.textContent=m;e.classList.add("show");clearTimeout(_tt);_tt=setTimeout(()=>e.classList.remove("show"),3200);}
@@ -498,7 +523,12 @@ function toggleCard(id){const d=document.getElementById("det-"+id);const a=docum
 
 async function resolvePend(id,leito,item,btn){
   btn.disabled=true;btn.textContent="Salvando...";
-  try{await db.collection("pendencias").doc(id).update({status:"resolvido",resolvidoPor:currentUser.nome,resolvidoEm:firebase.firestore.FieldValue.serverTimestamp()});await aLog("resolveu_pendencia",currentUser.nome,{pendenciaId:id,leito,item});toast("✅ Pendência concluída!");}
+  try{
+    await db.collection("pendencias").doc(id).update({status:"resolvido",resolvidoPor:currentUser.nome,resolvidoEm:firebase.firestore.FieldValue.serverTimestamp()});
+    await aLog("resolveu_pendencia",currentUser.nome,{pendenciaId:id,leito,item});
+    await adicionarPonto(currentUser.nome,currentUser.id||currentUser.drt);
+    toast("✅ Pendência concluída! +1 ponto 🏆");
+  }
   catch(e){console.error(e);btn.disabled=false;btn.textContent="✓ Marcar como concluído";}
 }
 
@@ -507,7 +537,7 @@ function confirmDel(id,leito,item){openModal("Remover pendência?",`<strong styl
 /* ── ADMIN ───────────────────────── */
 function renderAdmin(){
   const a=document.getElementById("app");
-  a.innerHTML=mkHeader(true)+`<div class="stats-grid" id="admin-stats"></div><div class="tabs tabs3" style="padding:10px 12px 0"><button class="tab active" id="atab-pend" onclick="adminTab('pend')">📋 Pendências</button><button class="tab" id="atab-team" onclick="adminTab('team')">👥 Equipe</button><button class="tab" id="atab-logs" onclick="adminTab('logs')">📊 Auditoria</button></div><div class="content"><div id="admin-pend"><div id="admin-form"></div><div id="admin-list"></div></div><div id="admin-team" style="display:none"></div><div id="admin-logs" style="display:none"></div></div>`;
+  a.innerHTML=mkHeader(true)+`<div class="stats-grid" id="admin-stats"></div><div class="tabs tabs3" style="padding:10px 12px 0"><button class="tab active" id="atab-pend" onclick="adminTab('pend')">📋 Pendências</button><button class="tab" id="atab-team" onclick="adminTab('team')">👥 Equipe</button><button class="tab" id="atab-logs" onclick="adminTab('logs')">📊 Auditoria</button><button class="tab" id="atab-rank" onclick="adminTab('rank')">🏆 Ranking</button></div><div class="content"><div id="admin-pend"><div id="admin-form"></div><div id="admin-list"></div></div><div id="admin-team" style="display:none"></div><div id="admin-logs" style="display:none"></div><div id="admin-rank" style="display:none"></div></div>`;
   renderAddForm("admin-form",()=>toast("✅ Pendência registrada!"));
   const u1=db.collection("pendencias").orderBy("criadoEm","desc").onSnapshot(s=>{pendencias=s.docs.map(d=>({id:d.id,...d.data()}));updateStats();if(document.getElementById("admin-list"))renderList("admin-list",true);},e=>console.error(e));
   const u2=db.collection("usuarios").orderBy("criadoEm","desc").onSnapshot(s=>{usuarios=s.docs.map(d=>({id:d.id,...d.data()}));updateStats();if(document.getElementById("admin-team")&&document.getElementById("admin-team").style.display!=="none")renderTeam();},e=>console.error(e));
@@ -515,7 +545,7 @@ function renderAdmin(){
   unsubs.push(u1,u2,u3);renderList("admin-list",true);
 }
 
-function adminTab(t){["pend","team","logs"].forEach(x=>{document.getElementById("admin-"+x).style.display=x===t?"block":"none";document.getElementById("atab-"+x).classList.toggle("active",x===t);});if(t==="team")renderTeam();if(t==="logs")renderLogs();if(t==="pend")renderList("admin-list",true);}
+function adminTab(t){["pend","team","logs","rank"].forEach(x=>{document.getElementById("admin-"+x).style.display=x===t?"block":"none";document.getElementById("atab-"+x).classList.toggle("active",x===t);});if(t==="team")renderTeam();if(t==="logs")renderLogs();if(t==="pend")renderList("admin-list",true);if(t==="rank")renderRanking();}
 
 function updateStats(){const s=document.getElementById("admin-stats");if(!s)return;const np=pendencias.filter(p=>p.status==="pendente").length,na=pendencias.filter(p=>p.status==="pendente"&&p.prioridade==="alta").length,nr=pendencias.filter(p=>p.status==="resolvido").length,nu=usuarios.length;s.innerHTML=[{n:np,l:"Pendentes",c:"#F57C00",i:"⏳"},{n:na,l:"Alta prior.",c:"#E53935",i:"🔴"},{n:nr,l:"Resolvidas",c:"#2E7D32",i:"✅"},{n:nu,l:"Técnicos",c:"#0066B3",i:"👥"}].map(({n,l,c,i})=>`<div class="stat-card"><div class="stat-num" style="color:${c}">${n}</div><div class="stat-lbl">${i} ${l}</div></div>`).join("");}
 
@@ -531,6 +561,96 @@ function renderLogs(){
   const acs=["Todas",...Array.from(new Set(auditLogs.map(l=>l.acao))).sort()];
   const fl=auditLogs.filter(l=>{const mu=_lfU==="Todos"||l.usuario===_lfU;const ma=_lfA==="Todas"||l.acao===_lfA;let md=true;if(_lfD&&l.timestamp){const d=l.timestamp.toDate?l.timestamp.toDate():new Date(l.timestamp);md=d.toISOString().slice(0,10)===_lfD;}return mu&&ma&&md;});
   c.innerHTML=`<div class="filter-bar"><div class="filter-row"><div><label class="label">Técnico</label><select class="input" style="padding:7px 10px;font-size:12px" onchange="_lfU=this.value;renderLogs()">${usrs.map(u=>`<option value="${h(u)}" ${_lfU===u?"selected":""}>${h(u)}</option>`).join("")}</select></div><div><label class="label">Ação</label><select class="input" style="padding:7px 10px;font-size:12px" onchange="_lfA=this.value;renderLogs()">${acs.map(a=>`<option value="${h(a)}" ${_lfA===a?"selected":""}>${ACOES[a]?ACOES[a].label:h(a)}</option>`).join("")}</select></div></div><label class="label">Data</label><input type="date" class="input" style="padding:7px 10px;font-size:12px" value="${_lfD}" onchange="_lfD=this.value;renderLogs()"><div class="audit-count"><span>${fl.length} registro(s)</span>${_lfD?`<button class="clear-btn" onclick="_lfD='';renderLogs()">Limpar data ×</button>`:""}</div></div>${fl.length===0?`<div class="empty"><div class="empty-icon">📋</div><div class="empty-txt">Nenhum registro encontrado.</div></div>`:""}${fl.map(l=>{const a=ACOES[l.acao]||{label:l.acao,color:"#5A7A9A"};const d=l.detalhes||{};const det=[d.leito?`🛏 Leito ${h(d.leito)}`:"",d.item?`· ${h(d.item.slice(0,45))}${d.item.length>45?"...":""}`:"",(d.prioridade?`· Prior: ${d.prioridade}`:""),d.role?`· Papel: ${d.role}`:"",d.ativo!==undefined?`· Ativo: ${d.ativo}`:"",d.nome?`· ${h(d.nome)}`:"",d.master?"· (Master)":""].filter(Boolean).join(" ");return `<div class="log-card" style="border-left:4px solid ${a.color}"><div class="log-meta"><div><div class="log-chips"><span class="chip" style="color:${a.color};background:${a.color}18;border:1px solid ${a.color}33">${a.label}</span><span style="font-size:12px;font-weight:700;color:var(--e-dark);font-family:'Montserrat',sans-serif">${h(l.usuario)}</span></div>${det?`<div class="log-detail">${det}</div>`:""}</div><span class="log-ts">${fmt(l.timestamp)}</span></div></div>`;}).join("")}`;
+}
+
+
+/* ── GAMIFICAÇÃO ─────────────────── */
+function getMesAtual(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
+function getNomeMes(ym){if(!ym)return"";const [y,m]=ym.split("-");const nomes=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];return `${nomes[parseInt(m)-1]}/${y}`;}
+
+async function adicionarPonto(nome,uid){
+  const mes=getMesAtual();
+  const docId=`${mes}_${uid||nome}`;
+  try{
+    const ref=db.collection("pontos").doc(docId);
+    const snap=await ref.get();
+    if(snap.exists){
+      await ref.update({pontos:firebase.firestore.FieldValue.increment(1),nome,mes,uid:uid||nome,atualizadoEm:firebase.firestore.FieldValue.serverTimestamp()});
+    }else{
+      await ref.set({nome,mes,uid:uid||nome,pontos:1,criadoEm:firebase.firestore.FieldValue.serverTimestamp(),atualizadoEm:firebase.firestore.FieldValue.serverTimestamp()});
+    }
+  }catch(e){console.warn("Erro ao adicionar ponto:",e);}
+}
+
+async function carregarRanking(mes){
+  try{
+    const snap=await db.collection("pontos").where("mes","==",mes).orderBy("pontos","desc").get();
+    return snap.docs.map(d=>({id:d.id,...d.data()}));
+  }catch(e){console.warn(e);return[];}
+}
+
+async function carregarMesesDisponiveis(){
+  try{
+    const snap=await db.collection("pontos").get();
+    const meses=new Set(snap.docs.map(d=>d.data().mes).filter(Boolean));
+    return Array.from(meses).sort().reverse();
+  }catch(e){return[getMesAtual()];}
+}
+
+async function renderRanking(){
+  const c=document.getElementById("admin-rank");if(!c)return;
+  c.innerHTML=`<div style="text-align:center;padding:30px"><div class="spin" style="margin:0 auto"></div></div>`;
+  const meses=await carregarMesesDisponiveis();
+  const mesAtual=_rankMes||(meses.length>0?meses[0]:getMesAtual());
+  _rankMes=mesAtual;
+  const dados=await carregarRanking(mesAtual);
+  _rankDados=dados;
+
+  const medalhas=["🥇","🥈","🥉"];
+  const medalhasPos=["rank-1","rank-2","rank-3"];
+
+  const rankHTML=dados.length===0
+    ?`<div class="rank-empty">😴 Nenhum ponto registrado neste mês ainda.</div>`
+    :dados.map((r,i)=>{
+      const pos=i+1;
+      const isTop=pos<=3;
+      const posClass=isTop?medalhasPos[i]:"rank-n";
+      const posLabel=isTop?medalhas[i]:pos;
+      return `<div class="rank-card" style="${pos===1?'border-color:#FFD700;background:linear-gradient(135deg,#FFFDE7,#fff);':''}">
+        <div class="rank-pos ${posClass}">${posLabel}</div>
+        <div class="rank-info">
+          <div class="rank-name">${h(r.nome)}</div>
+          <div class="rank-sub">DRT: ${h(r.uid||"—")}</div>
+        </div>
+        <div class="rank-pts">
+          <div class="rank-pts-num">${r.pontos}</div>
+          <div class="rank-pts-lbl">PONTOS</div>
+        </div>
+      </div>`;
+    }).join("");
+
+  c.innerHTML=`
+    <div class="rank-trophy">
+      <div class="rank-trophy-icon">🏆</div>
+      <div class="rank-trophy-title">Ranking de Desempenho</div>
+      <div class="rank-trophy-sub">1 ponto por pendência resolvida</div>
+    </div>
+    <div class="rank-filter">
+      <label class="label" style="margin-bottom:8px">Filtrar por mês</label>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">
+        ${meses.length===0
+          ?`<button class="rank-mes-btn active">${getNomeMes(getMesAtual())}</button>`
+          :meses.map(m=>`<button class="rank-mes-btn ${m===mesAtual?'active':''}" onclick="mudarMesRanking('${m}')">${getNomeMes(m)}</button>`).join("")
+        }
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--text2)">${dados.length} técnico(s) com pontuação em ${getNomeMes(mesAtual)}</div>
+    </div>
+    ${rankHTML}`;
+}
+
+async function mudarMesRanking(mes){
+  _rankMes=mes;
+  await renderRanking();
 }
 
 document.getElementById("modal-bg").addEventListener("click",e=>{if(e.target.id==="modal-bg")closeModal();});

@@ -230,10 +230,34 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
 .rank-trophy-title{font-family:'Montserrat',sans-serif;font-size:16px;font-weight:800;color:var(--e-dark)}
 .rank-trophy-sub{font-size:12px;color:var(--text2);margin-top:4px}
 .rank-empty{text-align:center;padding:32px 20px;color:var(--text2);font-size:13px;font-weight:600}
+/* ── RANKING DETALHE ────────────────── */
+.detail-card{background:#fff;border:1.5px solid var(--border);border-radius:10px;margin-bottom:6px;overflow:hidden}
+.detail-header{padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;background:var(--surface2)}
+.detail-body{padding:10px 14px;border-top:1px solid var(--border);display:none}
+.detail-item{padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--text2);display:flex;justify-content:space-between;align-items:center}
+.detail-item:last-child{border-bottom:none}
+.rank-reset-btn{background:var(--red-bg);color:var(--red);border:1.5px solid #FFCDD2;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif;transition:all .15s}
+.rank-reset-btn:hover{background:var(--red);color:#fff}
+.rank-actions{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+
 
 
 /* ── ADMIN HEADER ────────────────── */
 .admin-header-bar{background:linear-gradient(135deg,#002D5C,#003F7F);border-bottom:none;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 3px 14px rgba(0,45,92,.4)}
+
+/* ── NOTIFICAÇÕES ────────────────────── */
+.notif-banner{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:14px 18px;box-shadow:0 8px 32px rgba(0,63,127,.18);z-index:9998;max-width:92vw;width:360px;display:flex;align-items:flex-start;gap:12px;animation:fadeUp .3s ease}
+.notif-banner-icon{font-size:28px;flex-shrink:0}
+.notif-banner-body{flex:1}
+.notif-banner-title{font-family:'Montserrat',sans-serif;font-size:13px;font-weight:800;color:var(--e-dark);margin-bottom:3px}
+.notif-banner-sub{font-size:11px;color:var(--text2);line-height:1.4}
+.notif-banner-btns{display:flex;gap:6px;margin-top:10px}
+.notif-allow-btn{padding:7px 14px;border-radius:7px;border:none;background:var(--e-grad-h);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif}
+.notif-deny-btn{padding:7px 12px;border-radius:7px;border:1.5px solid var(--border);background:transparent;color:var(--text2);font-size:11px;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif}
+.notif-status{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;font-family:'Montserrat',sans-serif}
+.notif-on{background:var(--green-bg);color:var(--green);border:1px solid #C8E6C9}
+.notif-off{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
+
 </style>
 </head>
 <body>
@@ -303,10 +327,17 @@ const FIREBASE_CONFIG = {
   appId:             "1:876445177549:web:3b97c7a98775b4e3ad7b84"
 };
 const ADMIN_MASTER_PIN = "0490";
+// ══════════════════════════════════════
+// NOTIFICAÇÕES — Cole sua Server Key aqui
+// (veja o guia NOTIFICACOES.md)
+// ══════════════════════════════════════
+const FCM_SERVER_KEY = "COLE_SUA_SERVER_KEY_AQUI";
+const FCM_VAPID_KEY  = "COLE_SUA_VAPID_KEY_AQUI";
 </script>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
 
 <script>
 const ITENS=["Controle de gotejamento / transfusão de sangue","Watcher — Controle de SSVV","Medicamento correndo / pendente retirar","Mudança de decúbito","Paciente com controle de diurese","Instalar medicamento","Curativo","Glicemia","Reavaliação da dor","Excesso de materiais no Posto","Roupas sujas","Troca de fralda","Lesão por pressão (LPP)","Banho realizado","Algum cuidado especial","Medicamentos próprios","Outros"];
@@ -378,7 +409,7 @@ function renderLogin(){
       </div>
       <div id="l-nomew" style="display:none;margin-bottom:14px">
         <label class="label">Nome completo *</label>
-        <input class="input" id="l-nome" type="text" placeholder="Ex: Deyckson resende" autocomplete="off">
+        <input class="input" id="l-nome" type="text" placeholder="Ex: Wilson Oliveira" autocomplete="off">
       </div>
       <div id="l-p2w" style="display:none;margin-bottom:14px">
         <label class="label">Confirmar PIN</label>
@@ -426,12 +457,12 @@ function renderLogin(){
 
 function doLogin(u){currentUser=u;sessionStorage.setItem("pd_user",JSON.stringify(u));const ls=document.getElementById("login-screen");if(ls)ls.remove();startApp();}
 async function logout(){await aLog("logout",currentUser.nome);sessionStorage.removeItem("pd_user");currentUser=null;unsubs.forEach(f=>f());unsubs=[];const a=document.getElementById("app");a.style.display="none";a.innerHTML="";renderLogin();}
-function startApp(){const a=document.getElementById("app");a.style.display="block";if(currentUser.role==="admin")renderAdmin();else renderTech();}
+function startApp(){const a=document.getElementById("app");a.style.display="block";if(currentUser.role==="admin")renderAdmin();else renderTech();setTimeout(initNotificacoes,1500);}
 
 /* ── HEADER HTML ─────────────────── */
 function mkHeader(isAdmin=false){
   if(isAdmin) return `<div class="admin-header-bar"><div class="header-logo"><div class="header-icon">${STAR_ICON}</div><div><div class="header-title" style="color:#fff;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:800;letter-spacing:.05em">EINSTEIN</div><div class="header-sub" style="color:rgba(255,255,255,.6)">Painel Admin · ${h(currentUser.nome)}</div></div></div><button class="btn" style="padding:6px 12px;font-size:11px;font-weight:700;background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:8px;font-family:'Montserrat',sans-serif" onclick="logout()">Sair</button></div>`;
-  return `<div class="header"><div class="header-logo"><div class="header-icon">${STAR_ICON}</div><div><div class="header-title">EINSTEIN</div><div class="header-sub">Olá, ${h(currentUser.nome)} · DRT ${h(currentUser.drt||"")}</div></div></div><div style="display:flex;gap:8px;align-items:center"><span id="t-badge" style="display:none" class="badge-red">0</span><button class="btn btn-ghost" style="padding:6px 12px;font-size:11px;font-weight:700;font-family:'Montserrat',sans-serif" onclick="logout()">Sair</button></div></div>`;
+  return `<div class="header"><div class="header-logo"><div class="header-icon">${STAR_ICON}</div><div><div class="header-title">EINSTEIN</div><div class="header-sub">Olá, ${h(currentUser.nome)} · DRT ${h(currentUser.drt||"")}</div></div></div><div style="display:flex;gap:8px;align-items:center"><span id="notif-status-badge" class="notif-status notif-off" onclick="pedirPermissaoNotif()" style="cursor:pointer">🔕 Desativadas</span><span id="t-badge" style="display:none" class="badge-red">0</span><button class="btn btn-ghost" style="padding:6px 12px;font-size:11px;font-weight:700;font-family:'Montserrat',sans-serif" onclick="logout()">Sair</button></div></div>`;
 }
 
 /* ── TECH ────────────────────────── */
@@ -491,6 +522,13 @@ async function submitForm(cid){
   try{
     const ref=await db.collection("pendencias").add({leito,item,obs,prioridade:_curPri,status:"pendente",criadoPor:currentUser.nome,criadoEm:firebase.firestore.FieldValue.serverTimestamp(),resolvidoPor:null,resolvidoEm:null});
     await aLog("criou_pendencia",currentUser.nome,{pendenciaId:ref.id,leito,item,prioridade:_curPri});
+    if(_curPri==="alta"){
+      await enviarNotificacao(
+        "🔴 Pendência URGENTE — Leito "+leito,
+        item+" · Registrado por "+currentUser.nome,
+        {leito,item,prioridade:"alta"}
+      );
+    }
     const c=document.getElementById(cid);const cb=c?c._cb:null;
     renderAddForm(cid,cb);if(cb)cb();
   }catch(e){console.error(e);setE("Erro ao salvar.");btn.disabled=false;btn.textContent="Registrar Pendência";}
@@ -526,7 +564,7 @@ async function resolvePend(id,leito,item,btn){
   try{
     await db.collection("pendencias").doc(id).update({status:"resolvido",resolvidoPor:currentUser.nome,resolvidoEm:firebase.firestore.FieldValue.serverTimestamp()});
     await aLog("resolveu_pendencia",currentUser.nome,{pendenciaId:id,leito,item});
-    await adicionarPonto(currentUser.nome,currentUser.id||currentUser.drt);
+    await adicionarPonto(currentUser.nome,currentUser.drt||currentUser.id);
     toast("✅ Pendência concluída! +1 ponto 🏆");
   }
   catch(e){console.error(e);btn.disabled=false;btn.textContent="✓ Marcar como concluído";}
@@ -589,12 +627,105 @@ async function carregarRanking(mes){
   }catch(e){console.warn(e);return[];}
 }
 
+async function carregarDetalhes(nome,mes){
+  try{
+    // Check if ranking was reset for this month — only show activities after reset
+    let resetDate=null;
+    try{
+      const resetSnap=await db.collection("ranking_resets").doc(mes).get();
+      if(resetSnap.exists&&resetSnap.data().resetadoEm){
+        resetDate=resetSnap.data().resetadoEm.toDate?resetSnap.data().resetadoEm.toDate():new Date(resetSnap.data().resetadoEm);
+      }
+    }catch(e){}
+
+    const snap=await db.collection("auditLog")
+      .where("usuario","==",nome)
+      .get();
+    return snap.docs.map(d=>({id:d.id,...d.data()}))
+      .filter(l=>{
+        if(l.acao!=="resolveu_pendencia")return false;
+        if(!l.timestamp)return false;
+        const d=l.timestamp.toDate?l.timestamp.toDate():new Date(l.timestamp);
+        const lMes=String(d.getFullYear())+"-"+String(d.getMonth()+1).padStart(2,"0");
+        if(lMes!==mes)return false;
+        // If there was a reset, only show activities after the reset date
+        if(resetDate&&d<=resetDate)return false;
+        return true;
+      })
+      .sort((a,b)=>{
+        const ta=a.timestamp?.toDate?a.timestamp.toDate():new Date(a.timestamp||0);
+        const tb=b.timestamp?.toDate?b.timestamp.toDate():new Date(b.timestamp||0);
+        return tb-ta;
+      });
+  }catch(e){console.warn("carregarDetalhes erro:",e);return[];}
+}
+
 async function carregarMesesDisponiveis(){
   try{
     const snap=await db.collection("pontos").get();
     const meses=new Set(snap.docs.map(d=>d.data().mes).filter(Boolean));
     return Array.from(meses).sort().reverse();
   }catch(e){return[getMesAtual()];}
+}
+
+let _rankOpenUser=null;
+
+async function toggleDetalhes(nome,uid,mes){
+  const detDiv=document.getElementById("det-rank-"+uid);
+  if(!detDiv)return;
+  if(_rankOpenUser===uid){
+    detDiv.style.display="none";
+    _rankOpenUser=null;
+    return;
+  }
+  _rankOpenUser=uid;
+  // Close all others
+  document.querySelectorAll("[id^='det-rank-']").forEach(d=>d.style.display="none");
+  detDiv.innerHTML=`<div style="text-align:center;padding:10px;color:var(--text2);font-size:12px">Carregando atividades...</div>`;
+  detDiv.style.display="block";
+  const logs=await carregarDetalhes(nome,mes);
+  if(logs.length===0){
+    detDiv.innerHTML=`<div style="padding:10px;text-align:center;font-size:12px;color:var(--text2)">Nenhuma atividade registrada neste mês.</div>`;
+    return;
+  }
+  detDiv.innerHTML=logs.map((l,i)=>{
+    const d=l.timestamp?l.timestamp.toDate?l.timestamp.toDate():new Date(l.timestamp):null;
+    const ts=d?d.toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"—";
+    const det=l.detalhes||{};
+    return `<div class="detail-item">
+      <span>🛏️ Leito <strong>${h(det.leito||"—")}</strong> · ${h((det.item||"").slice(0,40))}${(det.item||"").length>40?"...":""}</span>
+      <span style="font-size:10px;color:var(--text3);white-space:nowrap;margin-left:8px">${ts} · <span style="color:var(--green);font-weight:700">+1pt</span></span>
+    </div>`;
+  }).join("");
+}
+
+async function confirmarResetRanking(mes){
+  openModal(
+    "Zerar ranking de "+getNomeMes(mes)+"?",
+    `<span style="color:var(--text2)">Os pontos de <strong>${getNomeMes(mes)}</strong> serão zerados.<br>As atividades anteriores ao reset não aparecerão mais nos detalhes.</span>`,
+    async()=>{
+      closeModal();
+      const btn=document.getElementById("btn-reset-rank");
+      if(btn){btn.disabled=true;btn.textContent="Zerando...";}
+      try{
+        // Delete all point docs for this month
+        const snap=await db.collection("pontos").where("mes","==",mes).get();
+        const batch=db.batch();
+        snap.docs.forEach(d=>batch.delete(d.ref));
+        await batch.commit();
+        // Save reset timestamp so detail view only shows activities after this moment
+        await db.collection("ranking_resets").doc(mes).set({
+          mes,
+          resetadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+          resetadoPor: currentUser.nome
+        });
+        await aLog("resetou_ranking","ADMIN",{mes});
+        toast("🗑️ Ranking de "+getNomeMes(mes)+" zerado!");
+        _rankMes="";
+        await renderRanking();
+      }catch(e){console.error(e);toast("Erro ao zerar ranking.");}
+    }
+  );
 }
 
 async function renderRanking(){
@@ -616,16 +747,20 @@ async function renderRanking(){
       const isTop=pos<=3;
       const posClass=isTop?medalhasPos[i]:"rank-n";
       const posLabel=isTop?medalhas[i]:pos;
-      return `<div class="rank-card" style="${pos===1?'border-color:#FFD700;background:linear-gradient(135deg,#FFFDE7,#fff);':''}">
-        <div class="rank-pos ${posClass}">${posLabel}</div>
-        <div class="rank-info">
-          <div class="rank-name">${h(r.nome)}</div>
-          <div class="rank-sub">DRT: ${h(r.uid||"—")}</div>
+      const safeUid=(r.uid||r.nome).replace(/[^a-zA-Z0-9]/g,"_");
+      return `<div class="detail-card">
+        <div class="detail-header" onclick="toggleDetalhes('${h(r.nome)}','${h(safeUid)}','${mesAtual}')">
+          <div class="rank-pos ${posClass}">${posLabel}</div>
+          <div class="rank-info">
+            <div class="rank-name">${h(r.nome)}</div>
+            <div class="rank-sub">DRT: ${h(r.drt||r.uid||"—")} · ${r.pontos} resolução(ões) em ${getNomeMes(mesAtual)} · clique para ver ▾</div>
+          </div>
+          <div class="rank-pts">
+            <div class="rank-pts-num">${r.pontos}</div>
+            <div class="rank-pts-lbl">PONTOS</div>
+          </div>
         </div>
-        <div class="rank-pts">
-          <div class="rank-pts-num">${r.pontos}</div>
-          <div class="rank-pts-lbl">PONTOS</div>
-        </div>
+        <div class="detail-body" id="det-rank-${h(safeUid)}"></div>
       </div>`;
     }).join("");
 
@@ -633,7 +768,7 @@ async function renderRanking(){
     <div class="rank-trophy">
       <div class="rank-trophy-icon">🏆</div>
       <div class="rank-trophy-title">Ranking de Desempenho</div>
-      <div class="rank-trophy-sub">1 ponto por pendência resolvida</div>
+      <div class="rank-trophy-sub">1 ponto por pendência resolvida · clique no técnico para ver detalhes</div>
     </div>
     <div class="rank-filter">
       <label class="label" style="margin-bottom:8px">Filtrar por mês</label>
@@ -643,14 +778,143 @@ async function renderRanking(){
           :meses.map(m=>`<button class="rank-mes-btn ${m===mesAtual?'active':''}" onclick="mudarMesRanking('${m}')">${getNomeMes(m)}</button>`).join("")
         }
       </div>
-      <div style="margin-top:8px;font-size:11px;color:var(--text2)">${dados.length} técnico(s) com pontuação em ${getNomeMes(mesAtual)}</div>
+      <div class="rank-actions">
+        <span style="font-size:11px;color:var(--text2)">${dados.length} técnico(s) com pontuação em ${getNomeMes(mesAtual)}</span>
+        ${dados.length>0?`<button id="btn-reset-rank" class="rank-reset-btn" onclick="confirmarResetRanking('${mesAtual}')">🗑️ Zerar ranking de ${getNomeMes(mesAtual)}</button>`:""}
+      </div>
     </div>
     ${rankHTML}`;
 }
 
 async function mudarMesRanking(mes){
   _rankMes=mes;
+  _rankOpenUser=null;
   await renderRanking();
+}
+
+
+/* ── NOTIFICAÇÕES PUSH ───────────────────── */
+let messaging = null;
+
+async function initNotificacoes(){
+  try{
+    if(!firebase.messaging)return;
+    messaging=firebase.messaging();
+    const perm=Notification.permission;
+    if(perm==="granted"){
+      await registrarToken();
+    }else if(perm==="default"){
+      // Only show banner if not dismissed this session
+      if(!sessionStorage.getItem("pd_notif_dismissed")){
+        setTimeout(()=>mostrarBannerNotif(),3000);
+      }
+    }
+    // Handle foreground messages
+    messaging.onMessage(payload=>{
+      const n=payload.notification||{};
+      mostrarNotifInApp(n.title||"Plantão Digital",n.body||"",payload.data||{});
+    });
+  }catch(e){console.warn("Notificações não disponíveis:",e);}
+}
+
+async function registrarToken(){
+  if(!messaging||!FCM_VAPID_KEY||FCM_VAPID_KEY.startsWith("COLE"))return;
+  try{
+    const token=await messaging.getToken({vapidKey:FCM_VAPID_KEY});
+    if(token&&currentUser){
+      await db.collection("fcm_tokens").doc(currentUser.id||currentUser.drt).set({
+        token,
+        nome:currentUser.nome,
+        drt:currentUser.drt||"",
+        userId:currentUser.id||currentUser.drt,
+        atualizadoEm:firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    return token;
+  }catch(e){console.warn("Erro ao registrar token FCM:",e);}
+}
+
+async function pedirPermissaoNotif(){
+  removerBannerNotif();
+  try{
+    const perm=await Notification.requestPermission();
+    if(perm==="granted"){
+      await registrarToken();
+      toast("🔔 Notificações ativadas!");
+      atualizarStatusNotif();
+    }else{
+      toast("Notificações bloqueadas pelo navegador.");
+    }
+  }catch(e){console.warn(e);}
+}
+
+function mostrarBannerNotif(){
+  if(document.getElementById("notif-banner"))return;
+  const d=document.createElement("div");
+  d.id="notif-banner";d.className="notif-banner";
+  d.innerHTML=`
+    <div class="notif-banner-icon">🔔</div>
+    <div class="notif-banner-body">
+      <div class="notif-banner-title">Ativar notificações?</div>
+      <div class="notif-banner-sub">Receba alertas de pendências urgentes mesmo com a tela bloqueada.</div>
+      <div class="notif-banner-btns">
+        <button class="notif-allow-btn" onclick="pedirPermissaoNotif()">Ativar agora</button>
+        <button class="notif-deny-btn" onclick="removerBannerNotif(true)">Agora não</button>
+      </div>
+    </div>`;
+  document.body.appendChild(d);
+}
+
+function removerBannerNotif(definitivo=false){
+  const b=document.getElementById("notif-banner");if(b)b.remove();
+  if(definitivo)sessionStorage.setItem("pd_notif_dismissed","1");
+}
+
+function atualizarStatusNotif(){
+  const el=document.getElementById("notif-status-badge");
+  if(!el)return;
+  const perm=Notification.permission;
+  el.className="notif-status "+(perm==="granted"?"notif-on":"notif-off");
+  el.textContent=perm==="granted"?"🔔 Ativadas":"🔕 Desativadas";
+}
+
+// Show in-app notification toast (foreground)
+function mostrarNotifInApp(title,body,data){
+  const d=document.createElement("div");
+  d.style.cssText="position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:12px 16px;box-shadow:0 8px 28px rgba(0,63,127,.2);z-index:10000;max-width:90vw;width:340px;animation:fadeUp .25s ease;cursor:pointer";
+  d.innerHTML=`<div style="display:flex;gap:10px;align-items:flex-start"><span style="font-size:22px">🔔</span><div><div style="font-family:'Montserrat',sans-serif;font-size:12px;font-weight:800;color:var(--e-dark)">${h(title)}</div><div style="font-size:11px;color:var(--text2);margin-top:2px">${h(body)}</div></div></div>`;
+  d.onclick=()=>d.remove();
+  document.body.appendChild(d);
+  setTimeout(()=>{if(d.parentNode)d.remove();},6000);
+}
+
+// Send push notification via FCM Legacy HTTP API
+async function enviarNotificacao(titulo,corpo,dados={}){
+  if(!FCM_SERVER_KEY||FCM_SERVER_KEY.startsWith("COLE"))return;
+  try{
+    await fetch("https://fcm.googleapis.com/fcm/send",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"key="+FCM_SERVER_KEY},
+      body:JSON.stringify({
+        to:"/topics/plantao_einstein",
+        notification:{title:titulo,body:corpo,icon:"/logo.png",badge:"/logo.png",vibrate:[200,100,200]},
+        data:dados,
+        android:{priority:"high",notification:{sound:"default",channel_id:"plantao"}},
+        webpush:{headers:{Urgency:"high"},notification:{icon:"/logo.png",badge:"/logo.png",requireInteraction:true}}
+      })
+    });
+  }catch(e){console.warn("Erro ao enviar notificação:",e);}
+}
+
+// Subscribe to topic after getting token
+async function inscreverTopico(token){
+  if(!FCM_SERVER_KEY||FCM_SERVER_KEY.startsWith("COLE"))return;
+  try{
+    await fetch(`https://iid.googleapis.com/iid/v1/${token}/rel/topics/plantao_einstein`,{
+      method:"POST",
+      headers:{"Authorization":"key="+FCM_SERVER_KEY,"Content-Type":"application/json"}
+    });
+  }catch(e){console.warn("Erro ao inscrever no tópico:",e);}
 }
 
 document.getElementById("modal-bg").addEventListener("click",e=>{if(e.target.id==="modal-bg")closeModal();});

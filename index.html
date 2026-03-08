@@ -564,7 +564,7 @@ async function resolvePend(id,leito,item,btn){
   try{
     await db.collection("pendencias").doc(id).update({status:"resolvido",resolvidoPor:currentUser.nome,resolvidoEm:firebase.firestore.FieldValue.serverTimestamp()});
     await aLog("resolveu_pendencia",currentUser.nome,{pendenciaId:id,leito,item});
-    await adicionarPonto(currentUser.nome,currentUser.drt||currentUser.id);
+    if(currentUser.drt&&currentUser.drt!=="ADMIN")await adicionarPonto(currentUser.nome,currentUser.drt);
     toast("✅ Pendência concluída! +1 ponto 🏆");
   }
   catch(e){console.error(e);btn.disabled=false;btn.textContent="✓ Marcar como concluído";}
@@ -608,6 +608,7 @@ function getNomeMes(ym){if(!ym)return"";const [y,m]=ym.split("-");const nomes=["
 
 async function adicionarPonto(nome,uid){
   const mes=getMesAtual();
+  if(!uid||uid==="ADMIN")return; // nunca pontuar ADMIN master
   const docId=`${mes}_${uid||nome}`;
   try{
     const ref=db.collection("pontos").doc(docId);
